@@ -1305,7 +1305,7 @@ namespace {
         /**
          * Gets the internal post type instance.
          *
-         * @return ACF_Internal_Post_Type
+         * @return ACF_Internal_Post_Type|false
          */
         private function instance()
         {
@@ -10063,7 +10063,7 @@ namespace {
          * @since   ACF 5.5.8.5.8
          *
          * @param   $field (array)
-         * @return  (int)
+         * @return  array
          */
         function prepare_field($field)
         {
@@ -10077,9 +10077,10 @@ namespace {
          * @param string         $url    The URL that should be embedded.
          * @param integer|string $width  Optional maxwidth value passed to the provider URL.
          * @param integer|string $height Optional maxheight value passed to the provider URL.
+         * @param array          $args   Optional. Additional arguments merged into the oEmbed request.
          * @return string|false The embedded HTML on success, false on failure.
          */
-        function wp_oembed_get($url = '', $width = 0, $height = 0)
+        public function wp_oembed_get($url = '', $width = 0, $height = 0, $args = array())
         {
         }
         /**
@@ -18249,7 +18250,7 @@ namespace {
          *
          * @var string
          */
-        public $version = '6.8.6';
+        public $version = '6.8.7';
         /**
          * The plugin settings array.
          *
