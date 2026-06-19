@@ -1,0 +1,4 @@
+/vendor/
+/composer.lock
+/secure-custom-fields/
+/*.zip

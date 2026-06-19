@@ -1,0 +1,48 @@
+name: Release new stubs
+
+on:
+  push:
+    paths:
+      - ".github/workflows/release.yml"
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: "How many latest stable versions to process"
+        required: false
+        default: "5"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "7.4"
+          extensions: json, zip
+          coverage: none
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction --ignore-platform-reqs
+
+      - name: Configure git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Generate & tag latest stub versions
+        run: bash bin/release-latest-versions.sh "${{ github.event.inputs.keep || '5' }}"
+
+      - name: Push commits and tags
+        run: git push origin main --follow-tags

@@ -1,0 +1,69 @@
+{
+    "name": "mralaminahamed/secure-custom-fields-stubs",
+    "description": "Secure Custom Fields (ACF-compatible) function and class declaration stubs for static analysis.",
+    "type": "library",
+    "keywords": [
+        "secure-custom-fields",
+        "acf",
+        "advanced-custom-fields",
+        "custom-fields",
+        "wordpress",
+        "static analysis",
+        "phpstan",
+        "stubs",
+        "wordpress-plugin"
+    ],
+    "homepage": "https://github.com/mralaminahamed/phpstan-secure-custom-fields-stubs",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Al Amin Ahamed",
+            "homepage": "https://github.com/mralaminahamed"
+        }
+    ],
+    "require": {
+        "php-stubs/wordpress-stubs": "^5.3 || ^6.0"
+    },
+    "require-dev": {
+        "php": "~7.4 || ~8.0",
+        "php-stubs/generator": "^0.8.0",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^7.5 || ^8.5 || ^9.5",
+        "squizlabs/php_codesniffer": "^3.7"
+    },
+    "suggest": {
+        "szepeviktor/phpstan-wordpress": "WordPress extensions for PHPStan"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "php-stubs/generator": true
+        },
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "preferred-install": "dist"
+    },
+    "scripts": {
+        "analyze": "phpstan analyze",
+        "cs": "phpcs",
+        "cs-fix": "phpcbf",
+        "generate": "bash bin/generate.sh",
+        "release-latest": "bash bin/release-latest-versions.sh",
+        "validate-all": [
+            "@composer validate --strict",
+            "@generate"
+        ]
+    },
+    "scripts-descriptions": {
+        "analyze": "Run static analysis using PHPStan",
+        "cs": "Check coding standards",
+        "cs-fix": "Fix coding standards automatically",
+        "generate": "Generate Secure Custom Fields stubs from source files",
+        "release-latest": "Generate stubs for the latest 5 versions of Secure Custom Fields"
+    },
+    "support": {
+        "issues": "https://github.com/mralaminahamed/phpstan-secure-custom-fields-stubs/issues",
+        "source": "https://github.com/mralaminahamed/phpstan-secure-custom-fields-stubs"
+    }
+}
