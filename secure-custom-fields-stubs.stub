@@ -13703,6 +13703,12 @@ namespace {
          */
         public $fields = array();
         /**
+         * Per-request render id, shared across every render_form() call in this request.
+         *
+         * @var string|null
+         */
+        private $render_id = \null;
+        /**
          * Constructs the class.
          *
          * @since ACF 5.0.0
@@ -13837,6 +13843,31 @@ namespace {
         {
         }
         /**
+         * Returns the per-request render ID, generating one if necessary.
+         *
+         * @since SCF 6.8.8
+         *
+         * @return string
+         */
+        protected function get_render_id(): string
+        {
+        }
+        /**
+         * Folds metadata from `_acf_form_meta[]` inputs into the primary form
+         * configuration so the multi-`acf_form()`-in-one-outer-`<form>` pattern works.
+         *
+         * Non-field request-level args (`post_id`, `return`, `new_post`, `kses`) stay
+         * "last wins" via the primary form.
+         *
+         * @since SCF 6.8.8
+         *
+         * @param array $form The primary form configuration loaded from `_acf_form`.
+         * @return array The primary form with allowed-key extras and OR'd title/content flags.
+         */
+        protected function merge_form_meta(array $form): array
+        {
+        }
+        /**
          * Returns the fields a given form configuration will expose, mirroring the
          * selection logic used by render_form().
          *
@@ -13861,10 +13892,12 @@ namespace {
          *
          * @since SCF 6.8.5
          *
-         * @param array $form The validated form configuration.
+         * @param array $form   The validated form configuration.
+         * @param array $fields Optional pre-discovered fields for this form to avoid a
+         *                      redundant get_form_fields() call when the caller already has them.
          * @return array
          */
-        public function get_allowed_field_keys(array $form): array
+        public function get_allowed_field_keys(array $form, array $fields = array()): array
         {
         }
         /**
@@ -18250,7 +18283,7 @@ namespace {
          *
          * @var string
          */
-        public $version = '6.8.7';
+        public $version = '6.8.8';
         /**
          * The plugin settings array.
          *
@@ -26126,12 +26159,13 @@ namespace {
      *
      * @since   ACF 5.2.3
      *
-     * @param string $nonce  The nonce to check.
-     * @param string $action The action of the nonce.
-     * @param bool   $action_is_field Whether the action is a field key or not. Defaults to false.
+     * @param string $nonce               The nonce to check.
+     * @param string $action              The action of the nonce.
+     * @param bool   $action_is_field     Whether the action is a field key or not. Defaults to false.
+     * @param string $expected_field_type Optional field type the resolved field must be when $action_is_field is true. Prevents a nonce minted for one field type from being accepted by an AJAX handler that expects a different one. Defaults to empty (no type validation).
      * @return boolean
      */
-    function acf_verify_ajax($nonce = '', $action = '', $action_is_field = \false)
+    function acf_verify_ajax($nonce = '', $action = '', $action_is_field = \false, $expected_field_type = '')
     {
     }
     /**
@@ -27093,15 +27127,13 @@ namespace {
     {
     }
     /**
-     * acf_decrypt
-     *
-     * This function will decrypt an encrypted string using PHP
+     * Decrypts an encrypted string using PHP.
      * https://bhoover.com/using-php-openssl_encrypt-openssl_decrypt-encrypt-decrypt-data/
      *
      * @since   ACF 5.5.8
      *
-     * @param   $data (string)
-     * @return  (string)
+     * @param string $data The string to decrypt.
+     * @return string|false Decrypted string, or false if the payload is malformed or decryption fails.
      */
     function acf_decrypt($data = '')
     {
@@ -28423,7 +28455,7 @@ namespace {
     {
     }
     /**
-     * Helper function that returns the HTML attributes required for toolbar inline editing as a string, escaped and ready for output.
+     * Helper function that returns the HTML attributes required for toolbar inline editing as a string or array.
      *
      * Required. A list of the fields, each of which will be displayed in the popup toolbar.
      * Each field can be passed as one of the following.
@@ -28440,13 +28472,18 @@ namespace {
      * @param array $fields List of fields.
      * @param array $args   Additional options controlling toolbar display and behavior.
      *
-     * @type string $toolbar_icon  Optional. An html tag, can be an svg, to be used as the toolbar icon. If not passed, the icon of the first field will be used.
-     * @type string $toolbar_title Optional. A string to be used as the toolbar title. If not passed, the name of the first field will be used.
-     * @type string $uid           Optional. A unique identifier that isn't used by any other inline fields in this block. Pass if you have 2 elements that conflict.
+     * @type string  $toolbar_icon  Optional. An html tag, can be an svg, to be used as the toolbar icon. If not passed, the icon of the first field will be used.
+     * @type string  $toolbar_title Optional. A string to be used as the toolbar title. If not passed, the name of the first field will be used.
+     * @type string  $uid           Optional. A unique identifier that isn't used by any other inline fields in this block. Pass if you have 2 elements that conflict.
+     * @type boolean $return_array  Optional. If true, returns an array of attributes suitable for wp_get_attachment_image(). Default false.
      *
-     * @return string A string containing the attributes.
+     * @return string|array When $args['return_array'] is false (default): Returns a string of escaped HTML attributes ready for output.
+     *                      When $args['return_array'] is true: Returns an associative array of attribute names and escaped values.
+     *                      When using the array return value with wp_get_attachment_image(), no element will be rendered if
+     *                      the image field is empty. If users need an inline editing target for selecting an image, render a fallback element
+     *                      with the attributes returned by this function.
      */
-    function acf_inline_toolbar_editing_attrs($fields, $args = array()): string
+    function acf_inline_toolbar_editing_attrs($fields, $args = array())
     {
     }
     /**
