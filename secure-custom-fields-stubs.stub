@@ -3267,6 +3267,40 @@ namespace {
         {
         }
         /**
+         * Returns the field groups assigned to the current options page.
+         *
+         * @since SCF 6.9.3
+         *
+         * @return array
+         */
+        protected function get_options_page_field_groups()
+        {
+        }
+        /**
+         * Returns the top-level submitted field keys accepted by the current options page.
+         *
+         * Seamless clone subfields are submitted below the clone field's key, which is
+         * extracted from their input prefix.
+         *
+         * @since SCF 6.9.3
+         *
+         * @return array
+         */
+        protected function get_options_page_allowed_field_keys()
+        {
+        }
+        /**
+         * Filters submitted ACF values to the roots accepted by the current options page.
+         *
+         * @since SCF 6.9.3
+         *
+         * @param array $values Submitted ACF values.
+         * @return array
+         */
+        protected function filter_options_page_field_values(array $values): array
+        {
+        }
+        /**
          * This action will find and add field groups to the current edit page
          *
          * @type    action (admin_head)
@@ -14870,6 +14904,69 @@ namespace {
         {
         }
         /**
+         * Returns whether Local JSON writes must be restricted for this request.
+         *
+         * @since SCF 6.9.3
+         *
+         * @return boolean
+         */
+        protected function should_restrict_multisite_writes()
+        {
+        }
+        /**
+         * Gets the directories the current request may write to in multisite.
+         *
+         * Single-site requests and multisite super admins retain unrestricted
+         * Local JSON writes. All other multisite requests may only write to
+         * existing save path directories that canonically reside inside the
+         * current site's uploads directory — the only location WordPress
+         * isolates per site. The "sites" subdirectory of the uploads directory
+         * is always excluded: on the main site it holds the other sites'
+         * files. Sites that need restricted Local JSON writes can point the
+         * save_json setting or the acf/json/save_paths filter at a directory
+         * inside their uploads directory.
+         *
+         * @since SCF 6.9.3
+         *
+         * @param array $paths The configured save path candidates.
+         * @return array|null An array of canonical allowed directories, or null when unrestricted.
+         */
+        private function get_multisite_allowed_write_paths($paths)
+        {
+        }
+        /**
+         * Returns whether a Local JSON file target is within an allowed directory.
+         *
+         * Saves resolve existing files so symlinks cannot redirect writes outside
+         * an allowed directory. Deletes resolve the lexical file's parent because
+         * unlinking a symlink mutates that directory, not the symlink target. New
+         * targets also resolve their parent directory. Broken or otherwise
+         * unresolvable symlinks are never authorized. Targets match allowed
+         * directories by exact canonical path.
+         *
+         * @since SCF 6.9.3
+         *
+         * @param string     $file          The target file path.
+         * @param array|null $allowed_paths Canonical allowed directories, or null when unrestricted.
+         * @param string     $operation     The filesystem operation, either "save" or "delete".
+         * @return boolean
+         */
+        private function is_write_path_allowed($file, $allowed_paths, $operation)
+        {
+        }
+        /**
+         * Deletes a Local JSON file after checking WordPress's final filtered path.
+         *
+         * @since SCF 6.9.3
+         *
+         * @param string     $file          The target file path.
+         * @param array|null $allowed_paths Canonical allowed directories, or null when unrestricted.
+         * @return void
+         */
+        private function delete_allowed_file($file, $allowed_paths)
+        {
+        }
+        /**
          * Writes field group data to JSON file.
          *
          * @date    14/4/20
@@ -18389,7 +18486,7 @@ namespace {
          *
          * @var string
          */
-        public $version = '6.9.2';
+        public $version = '6.9.3';
         /**
          * The plugin settings array.
          *
@@ -26455,10 +26552,11 @@ namespace {
      *
      * @since   ACF 5.0.0
      *
-     * @param   $args (array)
-     * @return  (array)
+     * @param array $args                     The query arguments.
+     * @param bool  $enforce_read_permissions Whether to exclude posts the current user cannot read.
+     * @return array
      */
-    function acf_get_grouped_posts($args)
+    function acf_get_grouped_posts($args, $enforce_read_permissions = \false)
     {
     }
     /**
@@ -28316,6 +28414,17 @@ namespace {
     {
     }
     /**
+     * Checks if a path uses a PHP stream wrapper, such as `phar://` or `php://`.
+     *
+     * @since 6.9.3
+     *
+     * @param string $path The path to check.
+     * @return boolean True if the path begins with a stream wrapper.
+     */
+    function scf_path_has_stream_wrapper($path)
+    {
+    }
+    /**
      * Locate and include an ACF block's template.
      *
      * @since   ACF 6.0.4
@@ -29930,6 +30039,42 @@ namespace {
      * @return array
      */
     function acf_get_field_rest_links($post_id, array $field)
+    {
+    }
+    /**
+     * Replaces User subfield data with REST-safe values.
+     *
+     * @param mixed  $formatted_value The formatted parent value.
+     * @param mixed  $raw_value       The raw parent value.
+     * @param array  $sub_fields      The parent field's subfields.
+     * @param string $output_property The subfield property used as the output key.
+     * @return mixed
+     */
+    function scf_rest_sanitize_user_sub_fields($formatted_value, $raw_value, $sub_fields, $output_property)
+    {
+    }
+    /**
+     * Replaces formatted User field data with REST-safe values based on the field definition.
+     *
+     * @param mixed $formatted_value The formatted field value.
+     * @param mixed $raw_value       The raw field value.
+     * @param array $field           The field array.
+     * @return mixed
+     */
+    function scf_rest_sanitize_user_data($formatted_value, $raw_value, $field)
+    {
+    }
+    /**
+     * Applies standard field formatting while keeping User values safe for REST output.
+     *
+     * This does not apply the public acf/rest/format_value_for_rest filter.
+     *
+     * @param mixed      $value   The raw field value.
+     * @param string|int $post_id The post ID of the current object.
+     * @param array      $field   The field array.
+     * @return mixed
+     */
+    function scf_rest_format_standard_value($value, $post_id, $field)
     {
     }
     /**
