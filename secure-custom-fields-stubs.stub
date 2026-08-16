@@ -13833,6 +13833,14 @@ namespace {
          */
         private $render_id = \null;
         /**
+         * Grant verified for the next HTTP form submission.
+         *
+         * A null value keeps direct submit_form() calls on their existing path.
+         *
+         * @var array|null
+         */
+        private $submission_grant = \null;
+        /**
          * Constructs the class.
          *
          * @since ACF 5.0.0
@@ -13899,6 +13907,16 @@ namespace {
          * @return forms (array)
          */
         function get_forms()
+        {
+        }
+        /**
+         * Checks the rendered-form grant before AJAX field validation.
+         *
+         * @since SCF 6.9.4
+         *
+         * @return void
+         */
+        private function validate_save_post_authority(): void
         {
         }
         /**
@@ -13977,26 +13995,112 @@ namespace {
         {
         }
         /**
-         * Folds metadata from `_acf_form_meta[]` inputs into the primary form
-         * configuration so the multi-`acf_form()`-in-one-outer-`<form>` pattern works.
+         * Loads the submitted form and applies its signed grant.
          *
-         * Non-field request-level args (`post_id`, `return`, `new_post`, `kses`) stay
-         * "last wins" via the primary form.
+         * Registered IDs are matched exactly. Encrypted inline JSON remains a
+         * fallback, and grant verification works without OpenSSL.
          *
-         * @since SCF 6.8.8
+         * @since SCF 6.9.4
          *
-         * @param array $form The primary form configuration loaded from `_acf_form`.
-         * @return array The primary form with allowed-key extras and OR'd title/content flags.
+         * @param bool $validation_only Whether AJAX validation may use a registered
+         *                              form that is unavailable in this request.
+         * @return array|false The verified form, or false for an invalid request.
          */
-        protected function merge_form_meta(array $form): array
+        protected function prepare_submitted_form(bool $validation_only = \false)
         {
         }
         /**
-         * Returns the fields a given form configuration will expose, mirroring the
-         * selection logic used by render_form().
+         * Checks and merges `_acf_form_meta[]` grants for a submitted form.
          *
-         * Used by render_form() to discover what to render, and by submit_form() to
-         * derive the set of $_POST['acf'] keys the save path will accept.
+         * Every token must have a valid MAC and match the current render. A sibling
+         * grant adds field keys only when it has the same destination as the primary
+         * grant.
+         *
+         * @since SCF 6.9.4
+         *
+         * @param array $form                    The primary form configuration loaded from `_acf_form`.
+         * @param bool  $verify_form_configuration Whether the full primary form configuration is available.
+         * @return array|false The verified form, or false if its grant is missing or invalid.
+         */
+        private function verify_form_meta(array $form, bool $verify_form_configuration = \true)
+        {
+        }
+        /**
+         * Verifies a form metadata token before decoding its JSON.
+         *
+         * @since SCF 6.9.4
+         *
+         * @param string $token Encoded metadata token.
+         * @return array|false The authenticated metadata, or false for an invalid token.
+         */
+        protected function decode_form_meta_token(string $token)
+        {
+        }
+        /**
+         * Checks whether two grants point to the same save destination.
+         *
+         * @since SCF 6.9.4
+         *
+         * @param array $left  First grant.
+         * @param array $right Second grant.
+         * @return bool
+         */
+        protected function form_meta_destinations_match(array $left, array $right): bool
+        {
+        }
+        /**
+         * Builds a stable, keyed fingerprint for new-post settings.
+         *
+         * Associative arrays are sorted recursively, while list order stays
+         * unchanged. The HMAC keeps low-entropy values such as post passwords from
+         * becoming targets for offline guessing.
+         *
+         * @since SCF 6.9.4
+         *
+         * @param array $new_post New-post settings.
+         * @return string|false Fingerprint, or false when settings cannot be encoded.
+         */
+        protected function get_new_post_fingerprint(array $new_post)
+        {
+        }
+        /**
+         * Sorts associative arrays without changing list order.
+         *
+         * @since SCF 6.9.4
+         *
+         * @param mixed $value Value to canonicalize.
+         * @return mixed The value with associative keys sorted.
+         */
+        protected function canonicalize_new_post_value($value)
+        {
+        }
+        /**
+         * Cleans the list of allowed top-level field keys.
+         *
+         * @since SCF 6.9.4
+         *
+         * @param mixed $keys Candidate field keys.
+         * @return array
+         */
+        protected function normalize_allowed_field_keys($keys): array
+        {
+        }
+        /**
+         * Removes submitted ACF and upload roots that the grant did not allow.
+         *
+         * @since SCF 6.9.4
+         *
+         * @param array $allowed_field_keys Allowed top-level field keys.
+         * @param bool  $restrict_files     Whether to filter uploaded file branches.
+         * @return void
+         */
+        protected function restrict_submitted_field_keys(array $allowed_field_keys, bool $restrict_files = \true): void
+        {
+        }
+        /**
+         * Returns the fields selected by a form configuration.
+         *
+         * Rendering and saving share this lookup so they agree on the allowed roots.
          *
          * @since SCF 6.8.5
          *
@@ -14007,12 +14111,10 @@ namespace {
         {
         }
         /**
-         * Returns the top-level $_POST['acf'] keys a given form configuration will accept on save.
+         * Returns the top-level ACF keys rendered by a form.
          *
-         * Derived from the same field discovery render_form() uses, so the set of save-acceptable
-         * keys matches the set of keys the form actually rendered. For seamless clone fields whose
-         * subfield input names nest under the parent clone's key (e.g. acf[clone_key][subkey]),
-         * the parent's top-level key is what gets returned.
+         * Seamless clone subfields may use the parent input name, for example
+         * acf[clone_key][subkey]. In that case this method returns the parent key.
          *
          * @since SCF 6.8.5
          *
@@ -18486,7 +18588,7 @@ namespace {
          *
          * @var string
          */
-        public $version = '6.9.3';
+        public $version = '6.9.4';
         /**
          * The plugin settings array.
          *
