@@ -7265,17 +7265,16 @@ namespace {
         {
         }
         /**
-         * This filter is applied to the $value before it is updated in the db
+         * Filters the $value before it is updated in the db.
          *
-         * @type    filter
          * @since   ACF 3.6
          * @date    23/01/13
          *
-         * @param   $value - the value which will be saved in the database
-         * @param   $post_id - the post_id of which the value will be saved
-         * @param   $field - the field array holding all the field options
+         * @param mixed          $value   The value which will be saved in the database.
+         * @param integer|string $post_id The post_id of which the value will be saved.
+         * @param array          $field   The field array holding all the field options.
          *
-         * @return  $value - the modified value
+         * @return mixed
          */
         function update_value($value, $post_id, $field)
         {
@@ -11770,6 +11769,26 @@ namespace {
          * @return mixed
          */
         public function update_value($value, $post_id, $field)
+        {
+        }
+        /**
+         * Appends submitter-contributed values to a persisted field's `choices`
+         * array, subject to the `acf/fields/max_appended_choices` cap. Used by
+         * checkbox `save_custom` and select `save_options`. Callers must have
+         * already verified that the setting is enabled and that the field has
+         * an ID (i.e. it's not local/JSON-only).
+         *
+         * @internal Helper for SCF's choice field types; not intended for
+         *           external callers. Signature may change without notice.
+         *
+         * @since ACF 6.8.5
+         *
+         * @param array          $value   Submitted values.
+         * @param integer|string $post_id The post_id of which the value will be saved.
+         * @param array          $field   The persisted field array. Must have an ID.
+         * @return void
+         */
+        public function append_user_choices_to_field($value, $post_id, $field)
         {
         }
         /**
@@ -18353,7 +18372,7 @@ namespace {
          *
          * @var string
          */
-        public $version = '6.9.0';
+        public $version = '6.9.1';
         /**
          * The plugin settings array.
          *
@@ -26829,6 +26848,19 @@ namespace {
      * @return bool True if the user has the ACF capability.
      */
     function scf_current_user_has_capability()
+    {
+    }
+    /**
+     * Casts a numeric value to an integer, returning 0 for floats that cannot
+     * be represented as an integer (NAN or outside the integer range). Casting
+     * such floats directly raises a deprecation notice on PHP 8.5+.
+     *
+     * @since 6.9.1
+     *
+     * @param mixed $value A numeric value (int, float, or numeric string).
+     * @return integer
+     */
+    function scf_numeric_to_int($value)
     {
     }
     /**
