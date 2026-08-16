@@ -1031,6 +1031,44 @@ namespace {
         {
         }
         /**
+         * Gets all known field schema properties.
+         *
+         * The field schema may be either a direct object schema or a oneOf of
+         * field type variants. Update inputs are partial, so they need the union
+         * of known properties without requiring a complete field object.
+         *
+         * @since 6.8.0
+         *
+         * @return array
+         */
+        private function get_field_schema_properties()
+        {
+        }
+        /**
+         * Merges field property schema maps while preserving enum/type variants.
+         *
+         * @since 6.8.0
+         *
+         * @param array $properties Existing property schema map.
+         * @param array $next_properties Property schema map to merge in.
+         * @return array
+         */
+        private function merge_field_schema_properties(array $properties, array $next_properties)
+        {
+        }
+        /**
+         * Merges two schemas for the same field property.
+         *
+         * @since 6.8.0
+         *
+         * @param array $property_schema Existing property schema.
+         * @param array $next_property_schema Property schema to merge in.
+         * @return array
+         */
+        private function merge_field_schema_property(array $property_schema, array $next_property_schema)
+        {
+        }
+        /**
          * Gets the SCF identifier schema.
          *
          * @since 6.8.0
@@ -5259,6 +5297,9 @@ namespace {
         {
         }
     }
+    /**
+     * Base class for ACF-backed internal post types.
+     */
     abstract class ACF_Internal_Post_Type
     {
         /**
@@ -8420,6 +8461,19 @@ namespace {
          * @return array
          */
         public function get_renamed_layouts($post_id, $field): array
+        {
+        }
+        /**
+         * Deletes any ACF row meta that belongs to the provided flexible content row.
+         *
+         * @since ACF 6.5
+         *
+         * @param integer $i       The index of the row to delete.
+         * @param array   $field   The field array containing all settings.
+         * @param mixed   $post_id The post ID where the value is saved.
+         * @return boolean
+         */
+        private function delete_row_meta_by_prefix($i, $field, $post_id)
         {
         }
         /**
@@ -17608,6 +17662,18 @@ namespace {
         {
         }
         /**
+         * Checks whether the matched REST route permits the request.
+         *
+         * @since SCF 6.8.0
+         *
+         * @param array           $handler The matched REST route handler.
+         * @param WP_REST_Request $request The request object.
+         * @return bool True when the route permission callback allows the request.
+         */
+        private function request_has_permission($handler, $request)
+        {
+        }
+        /**
          * Filter post types requests for individual post type requests.
          *
          * @since SCF 6.5.0
@@ -17670,10 +17736,14 @@ namespace {
         /**
          * Get the SCF internal post ID for a post type.
          *
+         * Only exposed to users who can edit the post type definition, so that
+         * consumers (e.g. Command Palette commands) can rely on its presence as
+         * a capability check.
+         *
          * @since SCF 6.8.3
          *
          * @param array $post_type_object The post type object.
-         * @return int|null The post ID if managed by SCF, null otherwise.
+         * @return int|null The post ID if managed by SCF and editable by the current user, null otherwise.
          */
         public function get_scf_post_id($post_type_object)
         {
@@ -18283,7 +18353,7 @@ namespace {
          *
          * @var string
          */
-        public $version = '6.8.9';
+        public $version = '6.9.0';
         /**
          * The plugin settings array.
          *
