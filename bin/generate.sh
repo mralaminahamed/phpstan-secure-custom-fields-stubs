@@ -20,7 +20,7 @@ HEADER=$'/**\n * Generated stub declarations for Secure Custom Fields.\n * @see 
 FILE="$ROOT_DIR/secure-custom-fields-stubs.stub"
 FILE_CONSTANTS="$ROOT_DIR/secure-custom-fields-constants-stubs.stub"
 GENERATOR_BIN="$ROOT_DIR/vendor/bin/generate-stubs"
-FINDER_FILE="$ROOT_DIR/finder.php"
+FINDER_FILE="$ROOT_DIR/configs/finder.php"
 
 echo "Validating requirements..."
 [[ -x "$GENERATOR_BIN" ]] || error_exit "Stub generator not found or not executable at $GENERATOR_BIN"
