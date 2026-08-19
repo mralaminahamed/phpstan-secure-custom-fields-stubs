@@ -65,5 +65,10 @@
     "support": {
         "issues": "https://github.com/mralaminahamed/phpstan-secure-custom-fields-stubs/issues",
         "source": "https://github.com/mralaminahamed/phpstan-secure-custom-fields-stubs"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SecureCustomFieldsStubs\\Tests\\": "tests/"
+        }
     }
 }
