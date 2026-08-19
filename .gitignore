@@ -1,3 +1,7 @@
 /vendor/
 /composer.lock
 /report.txt
+
+# PHPUnit
+.phpunit.result.cache
+coverage/
