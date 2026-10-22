@@ -36,6 +36,35 @@ namespace SCF\Blocks {
         public function get_value(array $source_attrs, \WP_Block $block_instance, string $attribute_name)
         {
         }
+        /**
+         * Removes the password from expanded post objects before they are output.
+         *
+         * @since SCF 6.9.7
+         *
+         * @param mixed $value The field value, possibly containing WP_Post objects.
+         * @return mixed
+         */
+        private function strip_post_passwords($value)
+        {
+        }
+        /**
+         * Decides whether a referenced post is expanded in a block binding value.
+         *
+         * Bindings render on the front end, so a referenced post is exposed when the
+         * viewer can read it there rather than when the REST API would return it.
+         * Attachments are always expanded because their files are publicly served.
+         * This runs last so that callbacks written for REST output do not decide
+         * what a rendered block shows.
+         *
+         * @since SCF 6.9.7
+         *
+         * @param boolean $exposable Whether the REST rules would expose the target.
+         * @param integer $target_id The referenced post or attachment ID.
+         * @return boolean
+         */
+        public function expose_reference_target($exposable, $target_id)
+        {
+        }
     }
     /**
      * Enqueues the JS layer that powers SCF block bindings in the block editor.
@@ -17791,6 +17820,19 @@ namespace {
         {
         }
         /**
+         * Checks whether a post's field values must stay out of the response because the
+         * post is password protected and the caller has neither unlocked it nor can edit it.
+         *
+         * @since SCF 6.9.7
+         *
+         * @param integer         $post_id The post ID.
+         * @param WP_REST_Request $request The current request.
+         * @return boolean
+         */
+        private function is_password_protected_content_hidden($post_id, $request)
+        {
+        }
+        /**
          * Load field values into the requested object. This method is not a part of any public API and is only public as
          * it is required by WordPress.
          *
@@ -18771,7 +18813,7 @@ namespace {
          *
          * @var string
          */
-        public $version = '6.9.6';
+        public $version = '6.9.7';
         /**
          * The plugin settings array.
          *
@@ -22722,6 +22764,19 @@ namespace {
      * @return void
      */
     function acf_update_bidirectional_values($target_item_ids, $post_id, $field, $target_prefix = \false)
+    {
+    }
+    /**
+     * Check whether a submitted bidirectional target is a valid choice for the origin field.
+     *
+     * @since SCF 6.9.7
+     * @internal
+     *
+     * @param integer|string $target ACF encoded target ID (e.g. 123, "user_1" or "term_5").
+     * @param array          $field  The origin field.
+     * @return boolean
+     */
+    function _scf_is_allowed_bidirectional_target($target, $field)
     {
     }
     /**
@@ -27139,6 +27194,18 @@ namespace {
      * @return  $post_id (mixed)
      */
     function acf_get_valid_post_id($post_id = 0)
+    {
+    }
+    /**
+     * Checks whether field values stored on an ACF post ID belong to a password-protected
+     * post whose password has not been entered yet.
+     *
+     * @since SCF 6.9.7
+     *
+     * @param integer|string $post_id ACF encoded post ID.
+     * @return boolean
+     */
+    function scf_post_password_required($post_id)
     {
     }
     /**
