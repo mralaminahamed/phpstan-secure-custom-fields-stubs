@@ -3103,6 +3103,9 @@ namespace {
      * Class SCF_Admin_Beta_Features
      *
      * This class provides different beta features that eventually will land on secure custom fields.
+     *
+     * The Beta Features admin page was removed in SCF 6.9.10, and its URL redirects to the Settings page.
+     * Beta features keep their stored "scf_beta_feature_{$name}_enabled" options.
      */
     class SCF_Admin_Beta_Features
     {
@@ -3155,38 +3158,6 @@ namespace {
         {
         }
         /**
-         * This function will add the SCF beta features menu item to the WP admin
-         *
-         * @type    action (admin_menu)
-         * @since   SCF 6.5.0
-         *
-         * @return  void
-         */
-        public function admin_menu()
-        {
-        }
-        /**
-         * Loads the admin beta features page.
-         *
-         * @since   SCF 6.5.0
-         *
-         * @return  void
-         */
-        public function load()
-        {
-        }
-        /**
-         * Modifies the admin body class.
-         *
-         * @since SCF 6.5.0
-         *
-         * @param string $classes Space-separated list of CSS classes.
-         * @return string
-         */
-        public function admin_body_class($classes)
-        {
-        }
-        /**
          * Includes various beta feature-related files.
          *
          * @since   SCF 6.5.0
@@ -3204,47 +3175,6 @@ namespace {
          * @return  void
          */
         public function register_beta_features()
-        {
-        }
-        /**
-         * Verifies the nonces and submits the value if it passes.
-         *
-         * @since   SCF 6.5.0
-         *
-         * @return  void
-         */
-        public function check_submit()
-        {
-        }
-        /**
-         * Display admin notices.
-         *
-         * @since   SCF 6.5.0
-         *
-         * @return  void
-         */
-        public function admin_notices()
-        {
-        }
-        /**
-         * Admin Beta Features html
-         *
-         * @since   SCF 6.5.0
-         *
-         * @return  void
-         */
-        public function html()
-        {
-        }
-        /**
-         * Output the metabox HTML for specific beta features
-         *
-         * @since SCF 6.5.0
-         *
-         * @param mixed $post    The post this metabox is being displayed on, should be an empty string always for us on an beta features page.
-         * @param array $metabox An array of the metabox attributes.
-         */
-        public function metabox_html($post, $metabox)
         {
         }
         /**
@@ -3348,17 +3278,95 @@ namespace {
         {
         }
     }
+}
+namespace SCF\Forms {
+    /**
+     * Checks final option names while an untrusted form is being saved.
+     *
+     * @internal
+     */
+    trait Option_Save_Guard
+    {
+        /**
+         * Saves values after checking every option they reach in custom storage.
+         *
+         * Default storage is not checked: its option names all start with "options_",
+         * a prefix that only field values use.
+         *
+         * The filters are present only for this save and apply only to submitted
+         * values. Values that code saves during the same request, such as from an
+         * acf/save_post callback, stay on their existing path.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param int|string    $guarded_post_id Storage identifier authorized by the form.
+         * @param callable|null $on_blocked     Optional callback for a blocked submitted value.
+         * @return bool
+         */
+        private function save_post_with_option_guard($guarded_post_id, ?callable $on_blocked = null): bool
+        {
+        }
+        /**
+         * Checks the final option name used by a field update.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param int|string $guarded_post_id Storage identifier authorized by the form.
+         * @param int|string $post_id         Storage identifier for this field update.
+         * @param array      $field           Field being updated.
+         * @return bool
+         */
+        private function can_update_guarded_option($guarded_post_id, $post_id, array $field): bool
+        {
+        }
+        /**
+         * Determines whether an option is field storage, from its field reference.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param string $option_name Final option name.
+         * @return string "field" when a field reference marks the option as field storage, "new" when
+         *                neither exists, "unreferenced" when the option exists without a reference,
+         *                and "foreign" otherwise.
+         */
+        private function get_guarded_option_ownership(string $option_name): string
+        {
+        }
+        /**
+         * Checks options that remain owned by WordPress even if an earlier
+         * vulnerable save added a matching field reference.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param string $option_name Final option name.
+         * @return bool
+         */
+        private function is_protected_wordpress_option(string $option_name): bool
+        {
+        }
+    }
+}
+namespace {
     /**
      * Class for managing options pages in the WordPress admin.
      */
     class acf_admin_options_page
     {
+        use \SCF\Forms\Option_Save_Guard;
         /**
          * Current options page data.
          *
          * @var array Contains the current options page
          */
         public $page;
+        /**
+         * Whether the last options page save blocked any submitted field values.
+         *
+         * @since SCF 6.9.10
+         *
+         * @var bool
+         */
+        protected $blocked_option_values = \false;
         /**
          * Initialize filters, action, variables and includes
          *
@@ -3391,6 +3399,19 @@ namespace {
          * @since   ACF 5.3.2
          */
         public function admin_enqueue_scripts()
+        {
+        }
+        /**
+         * Saves Options Page values after checking option ownership.
+         *
+         * Sets $blocked_option_values when a submitted value is rejected so the
+         * save redirect can surface a warning notice.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return bool
+         */
+        protected function save_options_page_values(): bool
         {
         }
         /**
@@ -8741,6 +8762,18 @@ namespace {
         {
         }
         /**
+         * Adds layout meta to the loaded ACF meta so it is copied to revisions (used by previews).
+         *
+         * @since SCF 6.9.10
+         *
+         * @param array          $meta    The array of loaded ACF meta.
+         * @param integer|string $post_id The post ID the meta was loaded from.
+         * @return array
+         */
+        public function load_meta($meta, $post_id)
+        {
+        }
+        /**
          * Returns an array of layouts that have been disabled for the current field.
          *
          * @since ACF 6.5
@@ -14010,6 +14043,7 @@ namespace {
          * Saves ACF field values to a comment.
          *
          * @since ACF 5.0.0
+         * @since SCF 6.9.10 Comment edits require permission to edit the comment.
          *
          * @param integer $comment_id The ID of the comment being saved to.
          * @return integer|void
@@ -14230,6 +14264,7 @@ namespace {
     }
     class acf_form_front
     {
+        use \SCF\Forms\Option_Save_Guard;
         /**
          * An array of registered form settings.
          *
@@ -15066,6 +15101,7 @@ namespace {
          * @type    function
          * @date    8/10/13
          * @since   ACF 5.0.0
+         * @since   SCF 6.9.10 Term edits require permission to edit the term.
          *
          * @param   $post_id (int)
          * @return  $post_id (int)
@@ -17689,6 +17725,19 @@ namespace {
         {
         }
         /**
+         * Updates a post type, keeping the stored meta box callback when the current user can't edit it.
+         *
+         * Local JSON sync and other trusted saves wrapped in acf_skip_internal_post_sanitization() are left as given.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param array $post The ACF post array.
+         * @return array
+         */
+        public function update_post($post)
+        {
+        }
+        /**
          * Imports a post type from CPTUI.
          *
          * @since ACF 6.1
@@ -17843,6 +17892,19 @@ namespace {
          * @return array
          */
         public function translate_post($post = array())
+        {
+        }
+        /**
+         * Updates a taxonomy, keeping the stored meta box callbacks when the current user can't edit them.
+         *
+         * Local JSON sync and other trusted saves wrapped in acf_skip_internal_post_sanitization() are left as given.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param array $post The ACF post array.
+         * @return array
+         */
+        public function update_post($post)
         {
         }
         /**
@@ -18848,6 +18910,7 @@ namespace {
          * @since ACF 5.5.10
          * @since SCF 6.9.8 Requires the preview query arg, since WordPress also flags
          *                  an editor viewing a draft or pending post as a preview.
+         * @since SCF 6.9.10 Checks the main query exists before calling is_preview().
          *
          * @param mixed $post_id  The post ID after being processed by acf_get_valid_post_id().
          * @param mixed $_post_id The post ID before being processed by acf_get_valid_post_id().
@@ -19253,7 +19316,7 @@ namespace {
          *
          * @var string
          */
-        public $version = '6.9.9';
+        public $version = '6.9.10';
         /**
          * The plugin settings array.
          *
@@ -19536,13 +19599,13 @@ namespace SCF\AI {
         {
         }
         /**
-         * Checks if AI functionality is enabled.
+         * Checks if Abilities functionality is enabled.
          *
-         * @since 6.8.0
+         * @since SCF 6.9.10
          *
          * @return boolean
          */
-        public function is_ai_enabled(): bool
+        public function is_abilities_enabled(): bool
         {
         }
         /**
@@ -19593,8 +19656,10 @@ namespace SCF\AI\Abilities {
     /**
      * The ACF Abilities API integration.
      *
-     * Extends the WordPress Abilities API to expose field groups, post types,
-     * taxonomies, and options pages when the "Allow AI Access" setting is enabled.
+     * Extends the WordPress Abilities API to list and register field groups, post types,
+     * and taxonomies when the "Enable Abilities" setting is enabled. Posts and terms of
+     * ACF post types and taxonomies with abilities enabled and "Show in REST API" on
+     * can also be queried, created, viewed, updated, and deleted.
      */
     class Abilities
     {
@@ -19671,9 +19736,10 @@ namespace SCF\AI\Abilities {
         /**
          * Parse JSON input from query parameters for Abilities API
          *
-         * WordPress 6.9's Abilities API REST controller doesn't parse JSON strings
-         * from query parameters in GET requests. This filter fixes that by detecting
-         * JSON strings in the 'input' parameter and parsing them into objects/arrays.
+         * The Abilities API REST controller doesn't parse JSON strings from query
+         * parameters in GET and DELETE requests (still the case in WordPress 7.2).
+         * This filter fixes that by detecting JSON strings in the 'input' parameter
+         * and parsing them into objects/arrays.
          *
          * @since 6.8.0
          *
@@ -19694,6 +19760,26 @@ namespace SCF\AI\Abilities {
     abstract class AbstractAbilityGroup
     {
         const REST_ABILITY_CLASS = 'SCF\AI\Abilities\SCF_REST_Ability';
+        /**
+         * WordPress REST API schema keywords that aren't part of JSON Schema, including JSON Hyper-Schema `links`.
+         */
+        const REST_ONLY_SCHEMA_KEYWORDS = array('context', 'readonly', 'arg_options', 'sanitize_callback', 'validate_callback', 'links');
+        /**
+         * Schema keywords that hold a map of property names to subschemas.
+         */
+        const SCHEMA_MAP_KEYWORDS = array('properties', 'patternProperties', 'definitions', '$defs');
+        /**
+         * Schema keywords that hold a list of subschemas.
+         */
+        const SCHEMA_LIST_KEYWORDS = array('anyOf', 'oneOf', 'allOf');
+        /**
+         * Schema keywords that hold a single subschema.
+         */
+        const SCHEMA_SINGLE_KEYWORDS = array('items', 'additionalProperties', 'not');
+        /**
+         * Type names used by some field REST schemas, mapped to their JSON Schema equivalents.
+         */
+        const SCHEMA_TYPE_ALIASES = array('int' => 'integer', 'float' => 'number');
         /**
          * Register abilities for this ability group
          *
@@ -19722,6 +19808,44 @@ namespace SCF\AI\Abilities {
          * @return object|null Registered ability object or null on failure.
          */
         protected function register_ability($id, $ability_args)
+        {
+        }
+        /**
+         * Applies ACF defaults to ability arguments and normalizes their schemas.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param array $ability_args Ability arguments.
+         * @return array
+         */
+        protected function prepare_ability_args(array $ability_args): array
+        {
+        }
+        /**
+         * Converts a WordPress REST API style schema into plain JSON Schema.
+         *
+         * MCP clients validate ability schemas as JSON Schema, which only allows `required` as an
+         * array of property names on the parent object. WordPress REST schemas instead set a boolean
+         * `required` on each property and use keywords such as `context` and `readonly`. WordPress
+         * validates both forms of `required` the same way, so input validation is unchanged.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param array $schema The schema to normalize.
+         * @return array
+         */
+        protected function normalize_schema(array $schema): array
+        {
+        }
+        /**
+         * Maps a type name such as `int` to its JSON Schema equivalent.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param mixed $type The type name.
+         * @return mixed
+         */
+        protected function normalize_schema_type($type)
         {
         }
         /**
@@ -19757,6 +19881,19 @@ namespace SCF\AI\Abilities {
          * @return array
          */
         protected function add_acf_fields_to_schema(array $schema, array $acf_fields): array
+        {
+        }
+        /**
+         * Returns the value schema for a field formatted by format_acf_fields_for_schema().
+         *
+         * The field's identity is moved into the description so that only schema keywords remain.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param array $field The formatted field.
+         * @return array
+         */
+        protected function get_field_value_schema(array $field): array
         {
         }
         /**
@@ -19826,7 +19963,7 @@ namespace SCF\AI\Abilities {
         {
         }
         /**
-         * A helper function to get the field groups that allow AI access.
+         * Returns field groups with abilities enabled, including their field definitions.
          *
          * @since 6.8.0
          *
@@ -19836,7 +19973,7 @@ namespace SCF\AI\Abilities {
         {
         }
         /**
-         * Check if a field group allows AI access.
+         * Check if a field group has abilities enabled.
          *
          * @since 6.8.0
          *
@@ -19866,6 +20003,45 @@ namespace SCF\AI\Abilities {
          * @return array The field with key, name, and sanitized values.
          */
         public function prepare_field_for_ability_import($field)
+        {
+        }
+        /**
+         * Ensures a flexible content layout has a name and sanitizes its settings.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param mixed $layout The layout being prepared for import.
+         * @return mixed The layout with a name and sanitized values.
+         */
+        private function prepare_layout_for_ability_import($layout)
+        {
+        }
+        /**
+         * Sanitizes a min or max setting, keeping negative and decimal values.
+         *
+         * An empty value means no limit, so it is kept as an empty string.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param mixed $value The submitted limit.
+         * @return integer|float|string
+         */
+        private function sanitize_numeric_limit($value)
+        {
+        }
+        /**
+         * Sanitizes a min or max item count, such as a repeater's row limits.
+         *
+         * Counts become non-negative integers so the field's REST schema never emits
+         * a negative minItems or maxItems. An empty value means no limit, so it is
+         * kept as an empty string.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param mixed $value The submitted limit.
+         * @return integer|string
+         */
+        private function sanitize_count_limit($value)
         {
         }
         /**
@@ -20020,6 +20196,20 @@ namespace SCF\AI\Abilities {
          * @return void
          */
         private function register_acf_taxonomy_term_abilities()
+        {
+        }
+        /**
+         * Finds a REST-enabled post type whose route is the same as the given term route.
+         *
+         * Term abilities send their requests to /wp/v2/{rest_base}. WordPress registers post type routes
+         * before taxonomy routes, so a post type with the same base handles those requests.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param string $rest_base The taxonomy's REST base.
+         * @return string The conflicting post type key, or an empty string if there isn't one.
+         */
+        private function get_post_type_using_rest_base(string $rest_base): string
         {
         }
         /**
@@ -21149,6 +21339,395 @@ namespace SCF\CLI {
         }
     }
 }
+namespace SCF\Settings_Page {
+    /**
+     * Handles all SCF settings tabs.
+     *
+     * Registers a submenu page for every tab returned by the
+     * 'acf/settings_page/tabs' filter. Tabs can specify a custom
+     * JS/CSS asset bundle and additional strings.
+     */
+    class Settings_Page
+    {
+        /**
+         * The settings app's script and style handle, also used as the AJAX action for saving any tab.
+         * Tab scripts and styles registered with 'js' and 'css' depend on this handle.
+         */
+        const DEFAULT_ASSET = 'acf-settings';
+        /**
+         * Tab keys reserved for SCF's own tabs, which mark themselves with the internal '_builtin' flag.
+         *
+         * @since SCF 6.9.10
+         */
+        const RESERVED_TAB_KEYS = array('general');
+        /**
+         * Prefix of each tab's admin page slug, "acf-settings-tab-{key}". It keeps the slugs from matching other
+         * plugins' pages, and matches ACF's so links to ACF's settings tabs keep working.
+         *
+         * @since SCF 6.9.10
+         */
+        const PAGE_SLUG_PREFIX = 'acf-settings-tab-';
+        /**
+         * Admin page slugs that used to hold settings now on the settings page, redirected to it.
+         *
+         * @since SCF 6.9.10
+         */
+        const LEGACY_PAGE_SLUGS = array('scf-beta-features');
+        /**
+         * Memoized tabs array, populated on first call to get_tabs().
+         *
+         * @since SCF 6.9.10
+         * @var array[]|null
+         */
+        protected $tabs = null;
+        /**
+         * Whether the active tab renders fields with the default UI, and so shows the Save button.
+         *
+         * @since SCF 6.9.10
+         * @var boolean
+         */
+        protected $show_save_button = false;
+        /**
+         * Sets up the class functionality.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return void
+         */
+        public function __construct()
+        {
+        }
+        /**
+         * Redirects the old Beta Features page URL to the settings page.
+         *
+         * Runs on "admin_page_access_denied", and on "wp_admin_page_not_found", which WordPress 7.2+
+         * fires instead for unregistered pages. Only one of them fires on a request.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return void
+         */
+        public function redirect_legacy_pages()
+        {
+        }
+        /**
+         * Registers a submenu page for every tab. Only the "Settings" tab
+         * gets a visible menu title in the admin sidebar.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return void
+         */
+        public function admin_menu()
+        {
+        }
+        /**
+         * Returns the admin page slug ("acf-settings-tab-{key}") of every registered tab.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return string[]
+         */
+        public function get_page_slugs(): array
+        {
+        }
+        /**
+         * Determines whether a setting is managed via code (a filter, or acf_update_setting()).
+         *
+         * @since SCF 6.9.10
+         *
+         * @param string $key The setting key.
+         * @return boolean
+         */
+        protected function is_setting_managed(string $key): bool
+        {
+        }
+        /**
+         * Enqueues assets for the settings page.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return void
+         */
+        public function load()
+        {
+        }
+        /**
+         * Modifies the admin body class.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param string $classes Space-separated list of CSS classes.
+         * @return string
+         */
+        public function admin_body_class($classes)
+        {
+        }
+        /**
+         * Renders SCF's header bar with the page title and the Save button, which the settings app controls.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return void
+         */
+        public function render_headerbar()
+        {
+        }
+        /**
+         * Returns localized tab data for SPA tab switching (no page reload).
+         *
+         * @since SCF 6.9.10
+         *
+         * @return void
+         */
+        public function ajax_get_tab_data()
+        {
+        }
+        /**
+         * Handles the AJAX request for saving settings.
+         *
+         * Verifies the nonce and user permissions, then checks the active tab
+         * for a custom 'ajax_callback'. If one is provided, it is called with
+         * no arguments and should read what it needs from $_POST. Otherwise,
+         * falls back to the default handler.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return void
+         */
+        public function ajax_request()
+        {
+        }
+        /**
+         * Returns the data to pass to JS for a tab, with any sections sanitized and empty ones removed.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param array $tab_config The tab config.
+         * @return mixed
+         */
+        protected function get_tab_data(array $tab_config)
+        {
+        }
+        /**
+         * Checks that every setting in the save request is one of the tab's own fields.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param array $tab_config The tab config.
+         * @return boolean
+         */
+        protected function is_saving_own_fields(array $tab_config): bool
+        {
+        }
+        /**
+         * Returns the active tab key from the current page query parameter.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return string
+         */
+        protected function get_active_tab()
+        {
+        }
+        /**
+         * Returns the config for a specific tab by key.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param string $key The tab key.
+         * @return array The tab config, or an empty array if not found.
+         */
+        protected function get_tab_config(string $key): array
+        {
+        }
+        /**
+         * Returns translated strings to pass to JavaScript.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return array Associative array of translated strings.
+         */
+        protected function get_strings()
+        {
+        }
+        /**
+         * Returns the Features tab sections.
+         *
+         * Includes the settings ACF PRO adds (Options Pages UI, Preload Blocks and Datastore), which are part of SCF.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return array[]
+         */
+        protected function get_features_sections(): array
+        {
+        }
+        /**
+         * Returns all settings page tabs.
+         *
+         * Each tab is an associative array with:
+         *   - 'key'           (string)   Tab identifier, used to build the page slug "acf-settings-tab-{key}". Use lowercase.
+         *   - 'label'         (string)   Translated display label.
+         *   - 'order'         (int)      Optional. Sort order, lower comes first. Defaults to 100.
+         *   - 'count'         (int|callable) Optional. Badge count shown on the tab, or a callable returning it.
+         *   - 'get_tab_data'  (callable) Optional. Returns the data passed to JS as acfSettingsPage.tabData.
+         *                                Only called when the tab is loaded. To render fields with the default
+         *                                UI, return array( 'sections' => array( ... ) ).
+         *   - 'tab_data'      (array)    Optional. Static alternative to 'get_tab_data'.
+         *   - 'js'            (string)   Optional. Full URL to a script that renders the tab's own UI inside the
+         *                                settings page, by calling acf.settingsPage.registerTab( key, { mount, unmount } ).
+         *                                Loaded after SCF's settings app on every settings page.
+         *   - 'css'           (string)   Optional. Full URL to a stylesheet for the tab's own UI, loaded after SCF's.
+         *   - 'strings'       (array)    Optional. Extra translated strings to merge for this tab.
+         *   - 'ajax_callback' (callable) Optional. Custom AJAX handler for this tab, called with no arguments.
+         *                                Should return a response array or WP_Error. When not set,
+         *                                the default settings save handler is used.
+         *   - 'enqueue'       (callable) Optional. Enqueues extra scripts or styles the tab needs. Called on
+         *                                every settings page load, whichever tab is active.
+         *   - 'version'       (string)   Optional. Version for the 'js' and 'css' assets. Defaults to SCF's version.
+         *
+         * The keys in RESERVED_TAB_KEYS ('general') belong to SCF's own tabs, which mark themselves with the
+         * internal '_builtin' flag. Other tabs using those keys are not added.
+         *
+         * Sections with no fields, on any tab, are not rendered.
+         *
+         * Each section is an array with 'title' (string) and 'fields' (array). Each field supports:
+         *   - 'key'          (string) Setting key, used for saving and initial value. Must be lowercase (fields with
+         *                             other keys aren't rendered), and registered with the
+         *                             'acf/settings/allowed_db_settings' filter so it can be saved.
+         *   - 'type'         (string) Field type: 'toggle', 'select' or 'text'.
+         *   - 'label'        (string) Translated field label.
+         *   - 'value'        (mixed)  Current value of the setting. A null value (e.g. a new setting that hasn't
+         *                             been saved yet) is shown as off for toggles and empty otherwise.
+         *   - 'options'      (array)  Required for 'select'. Each option has 'label', 'value' and optional 'disabled'.
+         *   - 'description'  (string) Optional. Translated description text.
+         *   - 'managed'      (bool)   Optional. Whether the setting is locked in the UI. Settings managed via code
+         *                             (see acf_is_setting_managed()) are always locked, so this is only needed
+         *                             for settings locked for some other reason.
+         *   - 'disabled'     (bool)   Optional. Whether the control is disabled, e.g. when a requirement isn't met.
+         *   - 'experimental' (bool)   Optional. Whether to show an "Experimental" badge next to the setting, for
+         *                             features that may change in a future release.
+         *   - 'learnMoreUrl' (string) Optional. URL for a "Learn more" link.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return array[] Array of tab definitions.
+         */
+        protected function get_tabs()
+        {
+        }
+        /**
+         * Returns a Google Maps setting field showing the value the Google Map field actually uses.
+         *
+         * The "acf/fields/google_map/api" filter runs after acf_get_setting() and wins over it, so when it
+         * changes the value, show that value and lock the field.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param string $setting The setting key.
+         * @param string $api_key The matching key in the Google Maps API args.
+         * @param string $label   The field label.
+         * @return array
+         */
+        protected function get_google_map_field(string $setting, string $api_key, string $label): array
+        {
+        }
+        /**
+         * Returns the fields for a section of the General tab, allowing them to be filtered.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param string  $section The section key.
+         * @param array[] $fields  The section fields.
+         * @return array[]
+         */
+        protected function get_section_fields(string $section, array $fields): array
+        {
+        }
+        /**
+         * Returns the sections of the General tab, allowing new sections to be added.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param array[] $sections The built-in sections.
+         * @return array[]
+         */
+        protected function get_general_sections(array $sections): array
+        {
+        }
+        /**
+         * Removes sections that have no fields.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param array[] $sections The sections.
+         * @return array[]
+         */
+        protected function remove_empty_sections(array $sections): array
+        {
+        }
+        /**
+         * Returns the admin URL for a tab based on its key.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param string $key The tab key.
+         * @return string
+         */
+        protected function get_tab_url(string $key): string
+        {
+        }
+        /**
+         * Sanitizes sections data for localization.
+         *
+         * Labels, descriptions and option labels are stripped of HTML. They're JSON-encoded and rendered by React,
+         * which escapes them as text.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param array[] $sections Raw sections array.
+         * @return array[]
+         */
+        protected function sanitize_sections(array $sections): array
+        {
+        }
+        /**
+         * Sanitizes a single settings field for localization.
+         *
+         * @since SCF 6.9.10
+         *
+         * @param mixed $field The raw field.
+         * @return array|null The sanitized field, or null if it can't be rendered.
+         */
+        protected function sanitize_field($field)
+        {
+        }
+        /**
+         * Handles AJAX requests for saving settings.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return mixed The response data or WP_Error.
+         */
+        public function get_ajax_response()
+        {
+        }
+        /**
+         * Displays the HTML for the admin page.
+         *
+         * The heading is hidden by SCF's admin styles, which show the title in the header bar instead. WordPress
+         * moves admin notices after it.
+         *
+         * @since SCF 6.9.10
+         *
+         * @return void
+         */
+        public function admin_html()
+        {
+        }
+    }
+}
 namespace SCF\Site_Health {
     /**
      * AI Usage
@@ -21186,7 +21765,7 @@ namespace SCF\Site_Health {
         {
         }
         /**
-         * Checks if ACF AI and the Abilities API are enabled.
+         * Checks if ACF Abilities API is enabled.
          *
          * @since 6.8.0
          *
@@ -21452,9 +22031,9 @@ namespace {
 namespace Composer\Autoload {
     class ComposerStaticInitb858699864578c66b2ddae4494f7a6e4
     {
-        public static $prefixLengthsPsr4 = array('S' => array('SCF\Site_Health\\' => 16, 'SCF\Meta\\' => 9, 'SCF\Forms\\' => 10, 'SCF\Fields\FlexibleContent\\' => 27, 'SCF\Datastore\\' => 14, 'SCF\CLI\\' => 8, 'SCF\Blocks\\' => 11, 'SCF\AI\\' => 7), 'J' => array('JsonSchema\\' => 11));
-        public static $prefixDirsPsr4 = array('SCF\Site_Health\\' => array(0 => __DIR__ . '/../..' . '/src/Site_Health'), 'SCF\Meta\\' => array(0 => __DIR__ . '/../..' . '/includes/Meta'), 'SCF\Forms\\' => array(0 => __DIR__ . '/../..' . '/includes/forms'), 'SCF\Fields\FlexibleContent\\' => array(0 => __DIR__ . '/../..' . '/includes/fields/FlexibleContent'), 'SCF\Datastore\\' => array(0 => __DIR__ . '/../..' . '/includes/Datastore'), 'SCF\CLI\\' => array(0 => __DIR__ . '/../..' . '/src/CLI'), 'SCF\Blocks\\' => array(0 => __DIR__ . '/../..' . '/includes/Blocks'), 'SCF\AI\\' => array(0 => __DIR__ . '/../..' . '/src/AI'), 'JsonSchema\\' => array(0 => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema'));
-        public static $classMap = array('JsonSchema\Constraints\BaseConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/BaseConstraint.php', 'JsonSchema\Constraints\CollectionConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/CollectionConstraint.php', 'JsonSchema\Constraints\Constraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/Constraint.php', 'JsonSchema\Constraints\ConstraintInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/ConstraintInterface.php', 'JsonSchema\Constraints\EnumConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/EnumConstraint.php', 'JsonSchema\Constraints\Factory' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/Factory.php', 'JsonSchema\Constraints\FormatConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/FormatConstraint.php', 'JsonSchema\Constraints\NumberConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/NumberConstraint.php', 'JsonSchema\Constraints\ObjectConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/ObjectConstraint.php', 'JsonSchema\Constraints\SchemaConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/SchemaConstraint.php', 'JsonSchema\Constraints\StringConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/StringConstraint.php', 'JsonSchema\Constraints\TypeCheck\LooseTypeCheck' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/TypeCheck/LooseTypeCheck.php', 'JsonSchema\Constraints\TypeCheck\StrictTypeCheck' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/TypeCheck/StrictTypeCheck.php', 'JsonSchema\Constraints\TypeCheck\TypeCheckInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/TypeCheck/TypeCheckInterface.php', 'JsonSchema\Constraints\TypeConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/TypeConstraint.php', 'JsonSchema\Constraints\UndefinedConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/UndefinedConstraint.php', 'JsonSchema\Entity\JsonPointer' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Entity/JsonPointer.php', 'JsonSchema\Exception\ExceptionInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/ExceptionInterface.php', 'JsonSchema\Exception\InvalidArgumentException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/InvalidArgumentException.php', 'JsonSchema\Exception\InvalidConfigException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/InvalidConfigException.php', 'JsonSchema\Exception\InvalidSchemaException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/InvalidSchemaException.php', 'JsonSchema\Exception\InvalidSchemaMediaTypeException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/InvalidSchemaMediaTypeException.php', 'JsonSchema\Exception\InvalidSourceUriException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/InvalidSourceUriException.php', 'JsonSchema\Exception\JsonDecodingException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/JsonDecodingException.php', 'JsonSchema\Exception\ResourceNotFoundException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/ResourceNotFoundException.php', 'JsonSchema\Exception\RuntimeException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/RuntimeException.php', 'JsonSchema\Exception\UnresolvableJsonPointerException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/UnresolvableJsonPointerException.php', 'JsonSchema\Exception\UriResolverException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/UriResolverException.php', 'JsonSchema\Exception\ValidationException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/ValidationException.php', 'JsonSchema\Iterator\ObjectIterator' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Iterator/ObjectIterator.php', 'JsonSchema\Rfc3339' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Rfc3339.php', 'JsonSchema\SchemaStorage' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/SchemaStorage.php', 'JsonSchema\SchemaStorageInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/SchemaStorageInterface.php', 'JsonSchema\UriResolverInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/UriResolverInterface.php', 'JsonSchema\UriRetrieverInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/UriRetrieverInterface.php', 'JsonSchema\Uri\Retrievers\AbstractRetriever' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/Retrievers/AbstractRetriever.php', 'JsonSchema\Uri\Retrievers\Curl' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/Retrievers/Curl.php', 'JsonSchema\Uri\Retrievers\FileGetContents' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/Retrievers/FileGetContents.php', 'JsonSchema\Uri\Retrievers\PredefinedArray' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/Retrievers/PredefinedArray.php', 'JsonSchema\Uri\Retrievers\UriRetrieverInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/Retrievers/UriRetrieverInterface.php', 'JsonSchema\Uri\UriResolver' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/UriResolver.php', 'JsonSchema\Uri\UriRetriever' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/UriRetriever.php', 'JsonSchema\Validator' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Validator.php', 'SCF\AI\AI' => __DIR__ . '/../..' . '/src/AI/AI.php', 'SCF\AI\Abilities\Abilities' => __DIR__ . '/../..' . '/src/AI/Abilities/Abilities.php', 'SCF\AI\Abilities\AbstractAbilityGroup' => __DIR__ . '/../..' . '/src/AI/Abilities/AbstractAbilityGroup.php', 'SCF\AI\Abilities\FieldGroup' => __DIR__ . '/../..' . '/src/AI/Abilities/FieldGroup.php', 'SCF\AI\Abilities\PostType' => __DIR__ . '/../..' . '/src/AI/Abilities/PostType.php', 'SCF\AI\Abilities\SCF_REST_Ability' => __DIR__ . '/../..' . '/src/AI/Abilities/SCF_REST_Ability.php', 'SCF\AI\Abilities\Taxonomy' => __DIR__ . '/../..' . '/src/AI/Abilities/Taxonomy.php', 'SCF\AI\GEO\FieldSettings' => __DIR__ . '/../..' . '/src/AI/GEO/FieldSettings.php', 'SCF\AI\GEO\GEO' => __DIR__ . '/../..' . '/src/AI/GEO/GEO.php', 'SCF\AI\GEO\Outputs\Blocks' => __DIR__ . '/../..' . '/src/AI/GEO/Outputs/Blocks.php', 'SCF\AI\GEO\Outputs\Posts' => __DIR__ . '/../..' . '/src/AI/GEO/Outputs/Posts.php', 'SCF\AI\GEO\Schema' => __DIR__ . '/../..' . '/src/AI/GEO/Schema.php', 'SCF\AI\GEO\SchemaData' => __DIR__ . '/../..' . '/src/AI/GEO/SchemaData.php', 'SCF\Blocks\Bindings' => __DIR__ . '/../..' . '/includes/Blocks/Bindings.php', 'SCF\Blocks\Bindings_Editor' => __DIR__ . '/../..' . '/includes/Blocks/Bindings_Editor.php', 'SCF\CLI\CLI' => __DIR__ . '/../..' . '/src/CLI/CLI.php', 'SCF\CLI\JsonCommand' => __DIR__ . '/../..' . '/src/CLI/JsonCommand.php', 'SCF\Datastore\Check_Screen' => __DIR__ . '/../..' . '/includes/Datastore/Check_Screen.php', 'SCF\Datastore\Localization' => __DIR__ . '/../..' . '/includes/Datastore/Localization.php', 'SCF\Datastore\REST_Save' => __DIR__ . '/../..' . '/includes/Datastore/REST_Save.php', 'SCF\Datastore\Revisions' => __DIR__ . '/../..' . '/includes/Datastore/Revisions.php', 'SCF\Fields\FlexibleContent\Layout' => __DIR__ . '/../..' . '/includes/fields/FlexibleContent/Layout.php', 'SCF\Fields\FlexibleContent\Render' => __DIR__ . '/../..' . '/includes/fields/FlexibleContent/Render.php', 'SCF\Forms\WC_Order' => __DIR__ . '/../..' . '/includes/forms/WC_Order.php', 'SCF\Meta\Comment' => __DIR__ . '/../..' . '/includes/Meta/Comment.php', 'SCF\Meta\MetaLocation' => __DIR__ . '/../..' . '/includes/Meta/MetaLocation.php', 'SCF\Meta\Option' => __DIR__ . '/../..' . '/includes/Meta/Option.php', 'SCF\Meta\Post' => __DIR__ . '/../..' . '/includes/Meta/Post.php', 'SCF\Meta\Term' => __DIR__ . '/../..' . '/includes/Meta/Term.php', 'SCF\Meta\User' => __DIR__ . '/../..' . '/includes/Meta/User.php', 'SCF\Meta\WooOrder' => __DIR__ . '/../..' . '/includes/Meta/WooOrder.php', 'SCF\Site_Health\AI_Usage' => __DIR__ . '/../..' . '/src/Site_Health/AI_Usage.php', 'SCF\Site_Health\Site_Health' => __DIR__ . '/../..' . '/src/Site_Health/Site_Health.php');
+        public static $prefixLengthsPsr4 = array('S' => array('SCF\Site_Health\\' => 16, 'SCF\Settings_Page\\' => 18, 'SCF\Meta\\' => 9, 'SCF\Forms\\' => 10, 'SCF\Fields\FlexibleContent\\' => 27, 'SCF\Datastore\\' => 14, 'SCF\CLI\\' => 8, 'SCF\Blocks\\' => 11, 'SCF\AI\\' => 7), 'J' => array('JsonSchema\\' => 11));
+        public static $prefixDirsPsr4 = array('SCF\Site_Health\\' => array(0 => __DIR__ . '/../..' . '/src/Site_Health'), 'SCF\Settings_Page\\' => array(0 => __DIR__ . '/../..' . '/src/Settings_Page'), 'SCF\Meta\\' => array(0 => __DIR__ . '/../..' . '/includes/Meta'), 'SCF\Forms\\' => array(0 => __DIR__ . '/../..' . '/includes/forms'), 'SCF\Fields\FlexibleContent\\' => array(0 => __DIR__ . '/../..' . '/includes/fields/FlexibleContent'), 'SCF\Datastore\\' => array(0 => __DIR__ . '/../..' . '/includes/Datastore'), 'SCF\CLI\\' => array(0 => __DIR__ . '/../..' . '/src/CLI'), 'SCF\Blocks\\' => array(0 => __DIR__ . '/../..' . '/includes/Blocks'), 'SCF\AI\\' => array(0 => __DIR__ . '/../..' . '/src/AI'), 'JsonSchema\\' => array(0 => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema'));
+        public static $classMap = array('JsonSchema\Constraints\BaseConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/BaseConstraint.php', 'JsonSchema\Constraints\CollectionConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/CollectionConstraint.php', 'JsonSchema\Constraints\Constraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/Constraint.php', 'JsonSchema\Constraints\ConstraintInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/ConstraintInterface.php', 'JsonSchema\Constraints\EnumConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/EnumConstraint.php', 'JsonSchema\Constraints\Factory' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/Factory.php', 'JsonSchema\Constraints\FormatConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/FormatConstraint.php', 'JsonSchema\Constraints\NumberConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/NumberConstraint.php', 'JsonSchema\Constraints\ObjectConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/ObjectConstraint.php', 'JsonSchema\Constraints\SchemaConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/SchemaConstraint.php', 'JsonSchema\Constraints\StringConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/StringConstraint.php', 'JsonSchema\Constraints\TypeCheck\LooseTypeCheck' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/TypeCheck/LooseTypeCheck.php', 'JsonSchema\Constraints\TypeCheck\StrictTypeCheck' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/TypeCheck/StrictTypeCheck.php', 'JsonSchema\Constraints\TypeCheck\TypeCheckInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/TypeCheck/TypeCheckInterface.php', 'JsonSchema\Constraints\TypeConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/TypeConstraint.php', 'JsonSchema\Constraints\UndefinedConstraint' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Constraints/UndefinedConstraint.php', 'JsonSchema\Entity\JsonPointer' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Entity/JsonPointer.php', 'JsonSchema\Exception\ExceptionInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/ExceptionInterface.php', 'JsonSchema\Exception\InvalidArgumentException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/InvalidArgumentException.php', 'JsonSchema\Exception\InvalidConfigException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/InvalidConfigException.php', 'JsonSchema\Exception\InvalidSchemaException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/InvalidSchemaException.php', 'JsonSchema\Exception\InvalidSchemaMediaTypeException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/InvalidSchemaMediaTypeException.php', 'JsonSchema\Exception\InvalidSourceUriException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/InvalidSourceUriException.php', 'JsonSchema\Exception\JsonDecodingException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/JsonDecodingException.php', 'JsonSchema\Exception\ResourceNotFoundException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/ResourceNotFoundException.php', 'JsonSchema\Exception\RuntimeException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/RuntimeException.php', 'JsonSchema\Exception\UnresolvableJsonPointerException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/UnresolvableJsonPointerException.php', 'JsonSchema\Exception\UriResolverException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/UriResolverException.php', 'JsonSchema\Exception\ValidationException' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Exception/ValidationException.php', 'JsonSchema\Iterator\ObjectIterator' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Iterator/ObjectIterator.php', 'JsonSchema\Rfc3339' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Rfc3339.php', 'JsonSchema\SchemaStorage' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/SchemaStorage.php', 'JsonSchema\SchemaStorageInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/SchemaStorageInterface.php', 'JsonSchema\UriResolverInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/UriResolverInterface.php', 'JsonSchema\UriRetrieverInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/UriRetrieverInterface.php', 'JsonSchema\Uri\Retrievers\AbstractRetriever' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/Retrievers/AbstractRetriever.php', 'JsonSchema\Uri\Retrievers\Curl' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/Retrievers/Curl.php', 'JsonSchema\Uri\Retrievers\FileGetContents' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/Retrievers/FileGetContents.php', 'JsonSchema\Uri\Retrievers\PredefinedArray' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/Retrievers/PredefinedArray.php', 'JsonSchema\Uri\Retrievers\UriRetrieverInterface' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/Retrievers/UriRetrieverInterface.php', 'JsonSchema\Uri\UriResolver' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/UriResolver.php', 'JsonSchema\Uri\UriRetriever' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Uri/UriRetriever.php', 'JsonSchema\Validator' => __DIR__ . '/..' . '/justinrainbow/json-schema/src/JsonSchema/Validator.php', 'SCF\AI\AI' => __DIR__ . '/../..' . '/src/AI/AI.php', 'SCF\AI\Abilities\Abilities' => __DIR__ . '/../..' . '/src/AI/Abilities/Abilities.php', 'SCF\AI\Abilities\AbstractAbilityGroup' => __DIR__ . '/../..' . '/src/AI/Abilities/AbstractAbilityGroup.php', 'SCF\AI\Abilities\FieldGroup' => __DIR__ . '/../..' . '/src/AI/Abilities/FieldGroup.php', 'SCF\AI\Abilities\PostType' => __DIR__ . '/../..' . '/src/AI/Abilities/PostType.php', 'SCF\AI\Abilities\SCF_REST_Ability' => __DIR__ . '/../..' . '/src/AI/Abilities/SCF_REST_Ability.php', 'SCF\AI\Abilities\Taxonomy' => __DIR__ . '/../..' . '/src/AI/Abilities/Taxonomy.php', 'SCF\AI\GEO\FieldSettings' => __DIR__ . '/../..' . '/src/AI/GEO/FieldSettings.php', 'SCF\AI\GEO\GEO' => __DIR__ . '/../..' . '/src/AI/GEO/GEO.php', 'SCF\AI\GEO\Outputs\Blocks' => __DIR__ . '/../..' . '/src/AI/GEO/Outputs/Blocks.php', 'SCF\AI\GEO\Outputs\Posts' => __DIR__ . '/../..' . '/src/AI/GEO/Outputs/Posts.php', 'SCF\AI\GEO\Schema' => __DIR__ . '/../..' . '/src/AI/GEO/Schema.php', 'SCF\AI\GEO\SchemaData' => __DIR__ . '/../..' . '/src/AI/GEO/SchemaData.php', 'SCF\Blocks\Bindings' => __DIR__ . '/../..' . '/includes/Blocks/Bindings.php', 'SCF\Blocks\Bindings_Editor' => __DIR__ . '/../..' . '/includes/Blocks/Bindings_Editor.php', 'SCF\CLI\CLI' => __DIR__ . '/../..' . '/src/CLI/CLI.php', 'SCF\CLI\JsonCommand' => __DIR__ . '/../..' . '/src/CLI/JsonCommand.php', 'SCF\Datastore\Check_Screen' => __DIR__ . '/../..' . '/includes/Datastore/Check_Screen.php', 'SCF\Datastore\Localization' => __DIR__ . '/../..' . '/includes/Datastore/Localization.php', 'SCF\Datastore\REST_Save' => __DIR__ . '/../..' . '/includes/Datastore/REST_Save.php', 'SCF\Datastore\Revisions' => __DIR__ . '/../..' . '/includes/Datastore/Revisions.php', 'SCF\Fields\FlexibleContent\Layout' => __DIR__ . '/../..' . '/includes/fields/FlexibleContent/Layout.php', 'SCF\Fields\FlexibleContent\Render' => __DIR__ . '/../..' . '/includes/fields/FlexibleContent/Render.php', 'SCF\Forms\Option_Save_Guard' => __DIR__ . '/../..' . '/includes/forms/Option_Save_Guard.php', 'SCF\Forms\WC_Order' => __DIR__ . '/../..' . '/includes/forms/WC_Order.php', 'SCF\Meta\Comment' => __DIR__ . '/../..' . '/includes/Meta/Comment.php', 'SCF\Meta\MetaLocation' => __DIR__ . '/../..' . '/includes/Meta/MetaLocation.php', 'SCF\Meta\Option' => __DIR__ . '/../..' . '/includes/Meta/Option.php', 'SCF\Meta\Post' => __DIR__ . '/../..' . '/includes/Meta/Post.php', 'SCF\Meta\Term' => __DIR__ . '/../..' . '/includes/Meta/Term.php', 'SCF\Meta\User' => __DIR__ . '/../..' . '/includes/Meta/User.php', 'SCF\Meta\WooOrder' => __DIR__ . '/../..' . '/includes/Meta/WooOrder.php', 'SCF\Settings_Page\Settings_Page' => __DIR__ . '/../..' . '/src/Settings_Page/Settings_Page.php', 'SCF\Site_Health\AI_Usage' => __DIR__ . '/../..' . '/src/Site_Health/AI_Usage.php', 'SCF\Site_Health\Site_Health' => __DIR__ . '/../..' . '/src/Site_Health/Site_Health.php');
         public static function getInitializer(\Composer\Autoload\ClassLoader $loader)
         {
         }
@@ -23129,6 +23708,20 @@ namespace SCF\Blocks\AutoInlineEditing {
      * @return array
      */
     function get_non_auto_inline_editing_fields(): array
+    {
+    }
+    /**
+     * Returns true if the field's return type supports auto inline editing.
+     *
+     * Fields with multiple selection enabled, an array/object return_format, or a field type that
+     * always returns an array regardless of return_format, are skipped.
+     *
+     * @since SCF 6.9.10
+     *
+     * @param array $field The field array.
+     * @return boolean
+     */
+    function field_return_type_supports_auto_inline_editing(array $field): bool
     {
     }
     /**
@@ -25988,6 +26581,22 @@ namespace {
     {
     }
     /**
+     * Keeps the stored Abilities settings when an edit screen submission doesn't include them.
+     *
+     * The SCF AI tab isn't rendered while the global "enable_abilities" setting is off, so saving
+     * would otherwise reset these settings to their defaults and re-enable abilities that had been
+     * switched off for this object.
+     *
+     * @since SCF 6.9.10
+     *
+     * @param array   $submitted The submitted field group, post type or taxonomy settings.
+     * @param WP_Post $post      The post being saved.
+     * @return array
+     */
+    function acf_preserve_unsubmitted_abilities_settings($submitted, $post)
+    {
+    }
+    /**
      * Checks whether a user meta key holds data WordPress uses for roles, capabilities or sign-in.
      *
      * @since SCF 6.9.9
@@ -27213,10 +27822,11 @@ namespace {
      * @since ACF 6.8.11
      * @internal
      *
-     * @param array   $data                An array of slashed, sanitized post data.
-     * @param array   $postarr             An array of sanitized post data.
-     * @param array   $unsanitized_postarr An array of slashed yet unsanitized post data.
-     * @param boolean $update              Whether this is an existing post being updated.
+     * @param array        $data                An array of slashed, sanitized post data.
+     * @param array        $postarr             An array of sanitized post data.
+     * @param array|object $unsanitized_postarr The slashed yet unsanitized post data, exactly as passed to
+     *                                          wp_insert_post(), which also accepts an object such as a WP_Post.
+     * @param boolean      $update              Whether this is an existing post being updated.
      * @return array
      */
     function _acf_preserve_internal_post_content($data, $postarr, $unsanitized_postarr, $update = \false)
@@ -27396,12 +28006,13 @@ namespace {
     {
     }
     /**
-     * This function will return the admin URL to the beta features page
+     * This function will return the admin URL where beta features are managed.
      *
      * @type    function
      * @since   SCF 6.5.0
+     * @since   SCF 6.9.10 Returns the Settings page URL, as the Beta Features page was removed.
      *
-     * @return  string The URL to the beta features page.
+     * @return  string The URL to the settings page.
      */
     function scf_get_admin_beta_features_url()
     {
@@ -27459,13 +28070,49 @@ namespace {
      *
      * alias of acf()->update_setting()
      *
-     * @since   ACF 5.0.0
+     * Saving to the database doesn't check the current user's capabilities, so callers acting on
+     * user input must check them first.
      *
-     * @param   $name (string)
-     * @param   $value (mixed)
-     * @return  n/a
+     * Settings that can be saved in the database, but are updated here without $save_to_db
+     * (e.g. from a theme or plugin on "acf/init"), are treated as set in code, even if they're
+     * registered with "acf/settings/allowed_db_settings" afterwards. Their in-memory value then
+     * takes precedence over the database value, and they are locked in the settings UI.
+     *
+     * @since ACF 5.0.0
+     * @since SCF 6.9.10 Added the `$save_to_db` parameter.
+     *
+     * @param string  $name       The name of the setting.
+     * @param mixed   $value      The value for the setting.
+     * @param boolean $save_to_db Whether to save to the db (true) or not (false). Defaults to false.
+     * @return mixed True on success, a WP_Error if the value couldn't be saved to the database.
      */
-    function acf_update_setting($name, $value)
+    function acf_update_setting($name, $value, $save_to_db = \false)
+    {
+    }
+    /**
+     * Returns true if a database-backed setting has been set in code via acf_update_setting().
+     *
+     * This holds whether the setting was registered with "acf/settings/allowed_db_settings" before or after it was
+     * set in code. Settings that aren't allowed in the database always return false.
+     *
+     * @since SCF 6.9.10
+     *
+     * @param string $name The name of the setting.
+     * @return boolean
+     */
+    function acf_is_setting_set_in_code($name)
+    {
+    }
+    /**
+     * Returns true if a setting is managed in code, either via an "acf/settings/{$name}" filter
+     * or via acf_update_setting(), and so cannot be changed in the settings UI.
+     *
+     * @since SCF 6.9.10
+     *
+     * @param string $name The name of the setting.
+     * @return boolean
+     */
+    function acf_is_setting_managed($name)
     {
     }
     /**
@@ -27491,6 +28138,63 @@ namespace {
      * @return  n/a
      */
     function acf_get_setting($name, $value = \null)
+    {
+    }
+    /**
+     * Returns the settings that can be saved in the database from the settings page, with their sanitize callbacks.
+     *
+     * Values are stored in options named "acf_{$name}", the same options ACF uses, so sites moving between ACF
+     * and SCF keep their settings. Other plugins can add settings with the "acf/settings/allowed_db_settings" filter.
+     *
+     * This is called from acf_get_setting(), so the filtered result is cached until the callbacks
+     * on the filter change.
+     *
+     * @since SCF 6.9.10
+     *
+     * @return array<string, array{sanitize_callback: callable, autoload: bool}>
+     */
+    function acf_get_allowed_db_settings(): array
+    {
+    }
+    /**
+     * Normalizes the settings returned by the "acf/settings/allowed_db_settings" filter.
+     *
+     * Each entry needs a callable 'sanitize_callback'. It runs on every save and SCF can't pick one for an unknown
+     * setting, so entries without one are dropped and can't be saved. 'autoload' defaults to true, like SCF's own
+     * settings. A filter that doesn't return an array leaves SCF's own settings in place.
+     *
+     * @since SCF 6.9.10
+     *
+     * @param mixed $settings The filtered settings.
+     * @param array $defaults SCF's own settings, used when the filter doesn't return an array.
+     * @return array<string, array{sanitize_callback: callable, autoload: bool}>
+     */
+    function acf_normalize_allowed_db_settings($settings, array $defaults): array
+    {
+    }
+    /**
+     * Reports problems with the "acf/settings/allowed_db_settings" filter with _doing_it_wrong(), once each.
+     *
+     * The allowed settings are often built before "init", when loading SCF's translations would itself trigger a
+     * notice, so the report waits for "init" if it hasn't run yet.
+     *
+     * @since SCF 6.9.10
+     *
+     * @param array[] $problems Each an array of the problem type and the setting name.
+     * @return void
+     */
+    function acf_report_invalid_allowed_db_settings(array $problems)
+    {
+    }
+    /**
+     * Sanitizes the REST API format setting value.
+     *
+     * @since SCF 6.9.10
+     *
+     * @param mixed $value The incoming value.
+     * @return string The sanitized value, defaulting to 'light'.
+     */
+    function acf_sanitize_rest_api_format($value)
     {
     }
     /**
@@ -28924,6 +29628,21 @@ namespace {
     {
     }
     /**
+     * Returns whether an attachment ID passes save-time image validation.
+     *
+     * Trusts post_mime_type rather than wp_attachment_is_image(), which bails when
+     * get_attached_file() is empty (stream-wrapped filesystems / some offload
+     * plugins). Deleted IDs, non-attachment posts, and non-image mimes fail.
+     *
+     * @since SCF 6.9.10
+     *
+     * @param integer|string $attachment_id The attachment ID.
+     * @return boolean
+     */
+    function acf_is_valid_image_attachment_id($attachment_id)
+    {
+    }
+    /**
      * acf_validate_attachment
      *
      * This function will validate an attachment based on a field's restrictions and return an array of errors
@@ -29361,6 +30080,17 @@ namespace {
      * @return boolean true if we're in a multisite install and on the main site
      */
     function acf_is_multisite_main_site()
+    {
+    }
+    /**
+     * Allow filterable permissions metabox callbacks.
+     *
+     * @since   SCF 6.9.10
+     *
+     * @param   boolean $enable_meta_box_cb_edit Can the current user edit metabox callbacks.
+     * @return  boolean
+     */
+    function acf_settings_enable_meta_box_cb_edit($enable_meta_box_cb_edit): bool
     {
     }
     /**
@@ -30224,6 +30954,21 @@ namespace {
     {
     }
     /**
+     * Returns true if inline `<script>` tags in block preview HTML may run in the block editor for all ACF blocks.
+     *
+     * Preview HTML can contain field values entered by other, possibly lower-privileged, users, so inline scripts are
+     * disabled by default. Individual block types can opt in with `allow_dangerous_preview_scripts` in
+     * acf_register_block_type(), or `allowDangerousPreviewScripts` under the `acf` key in block.json. Enqueueing scripts
+     * with the block and using the `render_block_preview` JS action is the recommended alternative.
+     *
+     * @since SCF 6.9.10
+     *
+     * @return boolean
+     */
+    function acf_blocks_allow_dangerous_preview_scripts()
+    {
+    }
+    /**
      * Removes a block type for the given name.
      *
      * @since   ACF 5.7.12
@@ -31054,10 +31799,11 @@ namespace {
     /**
      * Whether the SCF datastore is enabled.
      *
-     * The datastore requires WordPress 6.7+ and can be enabled via the
-     * `acf/settings/enable_datastore` filter.
+     * Requires WordPress 6.7+. Controlled by the "Datastore" setting on the Settings page, or the
+     * `acf/settings/enable_datastore` filter (applied by acf_get_setting()).
      *
      * @since ACF 6.8.1
+     * @since SCF 6.9.10 Reads the "enable_datastore" setting.
      *
      * @return boolean
      */
@@ -32281,12 +33027,19 @@ namespace {
      * attachment array in standard-format mode. The other variants (`dashicons`,
      * `url`, `svg`) carry user-provided data with no permission gate needed.
      *
+     * With the "Icon String" return format (the default), the formatted value is
+     * a string rather than an array; for `media_library` icons it is the
+     * attachment URL from `wp_get_attachment_url()`. In that case the type and
+     * attachment ID are read from the stored raw value instead.
+     *
      * When the type is `media_library` and the caller cannot read the target
      * attachment, the field is reduced to the same shape
-     * `?acf_format=light` would return: `{ type: 'media_library', value: <int> }`.
-     * Everything else passes through unchanged.
+     * `?acf_format=light` would return: `{ type: 'media_library', value: <int> }`,
+     * whatever the field's return format. Everything else passes through
+     * unchanged.
      *
      * @since SCF 6.9.6
+     * @since SCF 6.9.10 Media Library icons using the string return format are also reduced.
      *
      * @param mixed $formatted_value The formatted field value.
      * @param mixed $raw_value       The raw field value.
